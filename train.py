@@ -108,6 +108,8 @@ os.chdir(file_path)
 ent_n = 14513
 rel_n = 237
 
+print(device)
+
 model = Model(ent_n, rel_n, 50)
 model.to(device)
 optimizer = optim.Adam(model.parameters(), lr = 0.001)
@@ -167,7 +169,7 @@ def test(h_ids, r_typ, t_ids, log = True):
 		model.eval()
 		k = 10
 		batch_size = 20000
-		arange = range(h_ids.numel(), device = h_ids.device)
+		arange = range(h_ids.numel())
 		arange = tqdm(arange) if log else arange
 		
 		mean_ranks, hits_at_k = [], []
