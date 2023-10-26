@@ -18,6 +18,8 @@ from tqdm import tqdm
 
 from torch import Tensor
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 class Model(torch.nn.Module):
 	
 	def __init__(self, ent_n, rel_n, dim):
@@ -41,7 +43,7 @@ class Model(torch.nn.Module):
 		h = self.ent_emb(h_ids)
 		t = self.ent_emb(t_ids)
 		r_ids = r_typ * d
-		prod = torch.empty(n, 0)
+		prod = torch.empty(n, 0, device = h_ids.device)
 		
 		# h = F.relu(h)
 		h = F.normalize(h)
@@ -85,7 +87,7 @@ class Model(torch.nn.Module):
 	def random_sample(self, h_ids, r_typ, t_ids):
 		# Random sample either `head_index` or `tail_index` (but not both):
 		num_negatives = h_ids.numel() // 2
-		rnd_ids = torch.randint(self.ent_n, h_ids.size())
+		rnd_ids = torch.randint(self.ent_n, h_ids.size(), device = h_ids.device)
 
 		h_ids = h_ids.clone()
 		h_ids[:num_negatives] = rnd_ids[:num_negatives]
@@ -106,9 +108,10 @@ os.chdir(file_path)
 ent_n = 14513
 rel_n = 237
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-model = Model(ent_n, rel_n, 50).to(device)
+model = Model(ent_n, rel_n, 50)
+model.to(device)
 optimizer = optim.Adam(model.parameters(), lr = 0.001)
+# optimizer.to(device)
 
 raw = open("data/train.txt", "r").readlines()
 train_h = []
@@ -164,7 +167,7 @@ def test(h_ids, r_typ, t_ids, log = True):
 		model.eval()
 		k = 10
 		batch_size = 20000
-		arange = range(h_ids.numel())
+		arange = range(h_ids.numel(), device = h_ids.device)
 		arange = tqdm(arange) if log else arange
 		
 		mean_ranks, hits_at_k = [], []
@@ -175,7 +178,7 @@ def test(h_ids, r_typ, t_ids, log = True):
 			# print(h, r, t)
 			
 			scores = []
-			tail_indices = torch.arange(ent_n)
+			tail_indices = torch.arange(ent_n, device = ent_n.device)
 			# j = 0
 			for ts in tail_indices.split(batch_size):
 				
