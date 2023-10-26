@@ -3,8 +3,8 @@
 import os
 from torch.nn import Embedding
 
-import argparse
-import os.path as osp
+# import argparse
+# import os.path as osp
 
 import torch
 from torch import tensor
@@ -13,8 +13,8 @@ import torch.nn.functional as F
 
 from tqdm import tqdm
 
-from torch_geometric.datasets import FB15k_237
-from torch_geometric.nn import ComplEx, DistMult, RotatE, TransE
+# from torch_geometric.datasets import FB15k_237
+# from torch_geometric.nn import ComplEx, DistMult, RotatE, TransE
 
 from torch import Tensor
 
@@ -63,7 +63,7 @@ class Model(torch.nn.Module):
 			# print()
 			
 		# prod = F.sigmoid(prod)
-		prod = F.relu(prod)
+		# prod = F.relu(prod)
 		prod = F.normalize(prod)
 		# prod = prod * 10
 		
@@ -93,8 +93,8 @@ class Model(torch.nn.Module):
 		t_ids[num_negatives:] = rnd_ids[num_negatives:]
 
 		return h_ids, r_typ, t_ids
-		
-	
+
+
 # model = Model(10, 2, 5)
 # model.forward(torch.zeros([1], dtype = torch.long), torch.ones([1], dtype = torch.long), torch.zeros([1], dtype = torch.long))
 # model.forward(torch.zeros([1, 2], dtype = torch.long), torch.ones([1, 2], dtype = torch.long), torch.zeros([1, 2], dtype = torch.long))
@@ -106,8 +106,9 @@ os.chdir(file_path)
 ent_n = 14513
 rel_n = 237
 
-model = Model(ent_n, rel_n, 5)
-optimizer = optim.Adam(model.parameters(), lr = 0.005)
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+model = Model(ent_n, rel_n, 50).to(device)
+optimizer = optim.Adam(model.parameters(), lr = 0.001)
 
 raw = open("data/train.txt", "r").readlines()
 train_h = []
@@ -119,9 +120,9 @@ for line in raw:
 	train_h.append(h)
 	train_r.append(r)
 	train_t.append(t)
-train_h = tensor(train_h)
-train_r = tensor(train_r)
-train_t = tensor(train_t)
+train_h = tensor(train_h).to(device)
+train_r = tensor(train_r).to(device)
+train_t = tensor(train_t).to(device)
 
 raw = open("data/valid.txt", "r").readlines()
 valid_h = []
@@ -133,9 +134,9 @@ for line in raw:
 	valid_h.append(h)
 	valid_r.append(r)
 	valid_t.append(t)
-valid_h = tensor(valid_h)
-valid_r = tensor(valid_r)
-valid_t = tensor(valid_t)
+valid_h = tensor(valid_h).to(device)
+valid_r = tensor(valid_r).to(device)
+valid_t = tensor(valid_t).to(device)
 
 # torch.autograd.set_detect_anomaly(True)
 
