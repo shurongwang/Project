@@ -2,6 +2,10 @@
 
 import os
 import queue
+from numpy import *
+from matplotlib.pyplot import *
+import numpy.random
+from tqdm import tqdm
 
 # set current work diectory
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -145,53 +149,105 @@ def bfs(G, rG, s, t, ban_rel):
 					q2.put(v); vis2[v] = 1; pre2[v] = e_id
 	return path_list
 
-dick = {}
+# dick = {}
 
-def list2str(a):
-	s = ""
-	for u in a:
-		s += str(u) + ','
-	return s
+# def list2str(a):
+# 	s = ""
+# 	for u in a:
+# 		s += str(u) + ','
+# 	return s
 
-# for r in range(relation_count):
-for r in range(2, 3):
-	i = 0
-	for e_id in rel[r]:
-		h, t = G.e[e_id].h, G.e[e_id].t
-		path = bfs(G, rG, h, t, r)
-		# print()
-		# print(path)
-		i += 1
-		print(i, '/', len(rel[r]), e_id)
-		# if e_id:
-		# 	break
+# # for r in range(relation_count):
+# for r in range(2, 3):
+# 	i = 0
+# 	for e_id in rel[r]:
+# 		h, t = G.e[e_id].h, G.e[e_id].t
+# 		path = bfs(G, rG, h, t, r)
+# 		# print()
+# 		# print(path)
+# 		i += 1
+# 		print(i, '/', len(rel[r]), e_id)
+# 		# if e_id:
+# 		# 	break
 		
-		# if i == 200:
-		# 	break
+# 		# if i == 200:
+# 		# 	break
 		
-		for p in path:
-			(h, rr, t) = p
-			# print("r:", list2str(rr))
-			s = list2str(rr)
-			if s not in dick:
-				dick[s] = 0
-			dick[s] += 1
+# 		for p in path:
+# 			(h, rr, t) = p
+# 			# print("r:", list2str(rr))
+# 			s = list2str(rr)
+# 			if s not in dick:
+# 				dick[s] = 0
+# 			dick[s] += 1
 		
-	if r == 1:
-		break
+# 	if r == 1:
+# 		break
 
-d = []
-for key in dick:
-	value = dick[key]
-	d.append((value, key))
-d.sort()
-d.reverse()
-i = 0
-for (value, key) in d:
-	print(value, key)
-	i += 1
-	if i == 20:
-		break
+# d = []
+# for key in dick:
+# 	value = dick[key]
+# 	d.append((value, key))
+# d.sort()
+# d.reverse()
+# i = 0
+# for (value, key) in d:
+# 	print(value, key)
+# 	i += 1
+# 	if i == 20:
+# 		break
+
+
+def calc_init_emb(G, s):
+	dis_max = 2
+	n = G.node_size
+	dis = [-1] * relation_count
+	res = [0] * relation_count
+	dis.append(0)
+	
+	q = queue.Queue()
+	q.put((s, -1))
+	dis[-1] = 0
+	
+	while not q.empty():
+		u, ur = q.get()
+		if dis[ur] > dis_max:
+			break
+		for e_id in G.adj[u]:
+			r, v = G.e[e_id].r, G.e[e_id].t
+			if dis[r] != -1: continue
+			dis[r] = dis[ur] + 1
+			q.put((v, r))
+			res[r] += 1 / 2**(dis[r] - 1)
+	
+	# print(s, len(dis))
+	return array(res)
+
+v = array([0.] * relation_count)
+for i in range(relation_count):
+	v[i] = numpy.random.uniform(-100.0, +100.0)
+
+buc = []
+
+wtr = open("init_emb.txt", "w")
+for u in tqdm(range(entity_count)):
+	init_emb = calc_init_emb(G, u) - calc_init_emb(rG, u)
+	# print(len(G.adj[u]), len(rG.adj[u]), init_emb)
+	
+	# print(u)
+	
+	# if (sum(init_emb) == 0):
+		# print(u, G.adj[u], rG.adj[u])
+	
+	w = sum(v * init_emb)
+	if (w != 0): buc.append(w)
+	
+	for k in range(relation_count):
+		wtr.write(str(init_emb[k]) + ' ')
+	wtr.write('\n')
+print(len(buc))
+hist(array(buc), bins = range(-1000, 1000))
+show()
 
 # 72, 157, 58
 
